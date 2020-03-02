@@ -1,0 +1,13 @@
+--- d:\programdata\anaconda3\envs\torch4_py36\lib\site-packages\torch\nn\modules\activation.py
++++ d:\programdata\anaconda3\envs\torch4_py36\lib\site-packages\torch\nn\modules\activation.py
+@@ -1,9 +1,5 @@
+ class Sigmoid(Module):
+-    r"""Applies the element-wise function:
+-
+-    .. math::
+-        \text{Sigmoid}(x) = \frac{1}{1 + \exp(-x)}
+-
++    r"""Applies the element-wise function :math:`\text{Sigmoid}(x) = \frac{1}{1 + \exp(-x)}`
+ 
+     Shape:
+         - Input: :math:`(N, *)` where `*` means, any number of additional

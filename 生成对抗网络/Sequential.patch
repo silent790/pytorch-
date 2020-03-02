@@ -1,0 +1,38 @@
+--- d:\programdata\anaconda3\envs\torch4_py36\lib\site-packages\torch\nn\modules\container.py
++++ d:\programdata\anaconda3\envs\torch4_py36\lib\site-packages\torch\nn\modules\container.py
+@@ -40,10 +40,9 @@
+         idx %= size
+         return next(islice(iterator, idx, None))
+ 
+-    @_copy_to_script_wrapper
+     def __getitem__(self, idx):
+         if isinstance(idx, slice):
+-            return self.__class__(OrderedDict(list(self._modules.items())[idx]))
++            return Sequential(OrderedDict(list(self._modules.items())[idx]))
+         else:
+             return self._get_item_by_idx(self._modules.values(), idx)
+ 
+@@ -59,22 +58,16 @@
+             key = self._get_item_by_idx(self._modules.keys(), idx)
+             delattr(self, key)
+ 
+-    @_copy_to_script_wrapper
+     def __len__(self):
+         return len(self._modules)
+ 
+-    @_copy_to_script_wrapper
+     def __dir__(self):
+         keys = super(Sequential, self).__dir__()
+         keys = [key for key in keys if not key.isdigit()]
+         return keys
+ 
+-    @_copy_to_script_wrapper
+-    def __iter__(self):
+-        return iter(self._modules.values())
+-
+     def forward(self, input):
+-        for module in self:
++        for module in self._modules.values():
+             input = module(input)
+         return input
+ 

@@ -1,0 +1,101 @@
+--- /Users/jake/anaconda/envs/learning_pytorch/lib/python3.5/site-packages/torch/nn/modules/pooling.py
++++ /Users/jake/anaconda/envs/learning_pytorch/lib/python3.5/site-packages/torch/nn/modules/pooling.py
+@@ -1,4 +1,4 @@
+-class MaxPool2d(_MaxPoolNd):
++class MaxPool2d(Module):
+     r"""Applies a 2D max pooling over an input signal composed of several input
+     planes.
+ 
+@@ -7,15 +7,16 @@
+     can be precisely described as:
+ 
+     .. math::
+-        \begin{aligned}
+-            out(N_i, C_j, h, w) ={} & \max_{m=0, \ldots, kH-1} \max_{n=0, \ldots, kW-1} \\
+-                                    & \text{input}(N_i, C_j, \text{stride[0]} \times h + m,
+-                                                   \text{stride[1]} \times w + n)
+-        \end{aligned}
+ 
+-    If :attr:`padding` is non-zero, then the input is implicitly zero-padded on both sides
+-    for :attr:`padding` number of points. :attr:`dilation` controls the spacing between the kernel points.
+-    It is harder to describe, but this `link`_ has a nice visualization of what :attr:`dilation` does.
++        \begin{array}{ll}
++        out(N_i, C_j, h, w)  = \max_{{m}=0}^{kH-1} \max_{{n}=0}^{kW-1}
++                               input(N_i, C_j, stride[0] * h + m, stride[1] * w + n)
++        \end{array}
++
++    | If :attr:`padding` is non-zero, then the input is implicitly zero-padded on both sides
++      for :attr:`padding` number of points
++    | :attr:`dilation` controls the spacing between the kernel points. It is harder to describe,
++      but this `link`_ has a nice visualization of what :attr:`dilation` does.
+ 
+     The parameters :attr:`kernel_size`, :attr:`stride`, :attr:`padding`, :attr:`dilation` can either be:
+ 
+@@ -28,21 +29,15 @@
+         stride: the stride of the window. Default value is :attr:`kernel_size`
+         padding: implicit zero padding to be added on both sides
+         dilation: a parameter that controls the stride of elements in the window
+-        return_indices: if ``True``, will return the max indices along with the outputs.
+-                        Useful for :class:`torch.nn.MaxUnpool2d` later
++        return_indices: if True, will return the max indices along with the outputs.
++                        Useful when Unpooling later
+         ceil_mode: when True, will use `ceil` instead of `floor` to compute the output shape
+ 
+     Shape:
+         - Input: :math:`(N, C, H_{in}, W_{in})`
+-        - Output: :math:`(N, C, H_{out}, W_{out})`, where
+-
+-          .. math::
+-              H_{out} = \left\lfloor\frac{H_{in} + 2 * \text{padding[0]} - \text{dilation[0]}
+-                    \times (\text{kernel\_size[0]} - 1) - 1}{\text{stride[0]}} + 1\right\rfloor
+-
+-          .. math::
+-              W_{out} = \left\lfloor\frac{W_{in} + 2 * \text{padding[1]} - \text{dilation[1]}
+-                    \times (\text{kernel\_size[1]} - 1) - 1}{\text{stride[1]}} + 1\right\rfloor
++        - Output: :math:`(N, C, H_{out}, W_{out})` where
++          :math:`H_{out} = floor((H_{in}  + 2 * padding[0] - dilation[0] * (kernel\_size[0] - 1) - 1) / stride[0] + 1)`
++          :math:`W_{out} = floor((W_{in}  + 2 * padding[1] - dilation[1] * (kernel\_size[1] - 1) - 1) / stride[1] + 1)`
+ 
+     Examples::
+ 
+@@ -50,15 +45,39 @@
+         >>> m = nn.MaxPool2d(3, stride=2)
+         >>> # pool of non-square window
+         >>> m = nn.MaxPool2d((3, 2), stride=(2, 1))
+-        >>> input = torch.randn(20, 16, 50, 32)
++        >>> input = autograd.Variable(torch.randn(20, 16, 50, 32))
+         >>> output = m(input)
+ 
+     .. _link:
+         https://github.com/vdumoulin/conv_arithmetic/blob/master/README.md
+     """
+ 
++    def __init__(self, kernel_size, stride=None, padding=0, dilation=1,
++                 return_indices=False, ceil_mode=False):
++        super(MaxPool2d, self).__init__()
++        self.kernel_size = kernel_size
++        self.stride = stride or kernel_size
++        self.padding = padding
++        self.dilation = dilation
++        self.return_indices = return_indices
++        self.ceil_mode = ceil_mode
++
+     def forward(self, input):
+         return F.max_pool2d(input, self.kernel_size, self.stride,
+                             self.padding, self.dilation, self.ceil_mode,
+                             self.return_indices)
+ 
++    def __repr__(self):
++        kh, kw = _pair(self.kernel_size)
++        dh, dw = _pair(self.stride)
++        padh, padw = _pair(self.padding)
++        dilh, dilw = _pair(self.dilation)
++        padding_str = ', padding=(' + str(padh) + ', ' + str(padw) + ')' \
++            if padh != 0 and padw != 0 else ''
++        dilation_str = (', dilation=(' + str(dilh) + ', ' + str(dilw) + ')'
++                        if dilh != 0 and dilw != 0 else '')
++        return self.__class__.__name__ + ' (' \
++            + 'size=(' + str(kh) + ', ' + str(kw) + ')' \
++            + ', stride=(' + str(dh) + ', ' + str(dw) + ')' \
++            + padding_str + dilation_str + ')'
++
